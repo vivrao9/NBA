@@ -463,7 +463,7 @@ var title = svg.append("text")
         .text("Twelve Seasons of NBA Data");
 
 var testlogo = svg.append("svg:image")
-    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+    .attr("xlink:href", function(d) { return "nbaLogos/" + logoScale(focusTeam) +" "; })
     .attr("width",80)
     .attr("height", 80)
     .style("opacity",.8)
@@ -1879,7 +1879,7 @@ teamlyAntennae.on("mouseover", function(d) {
       return element.season ==year});
 
   testlogo
-    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+    .attr("xlink:href", function(d) { return "nbaLogos/" + logoScale(focusTeam) +" "; })
 
 
 //  movingQuadrilateralFront.data(superdataFocus)
@@ -2131,7 +2131,7 @@ if (setting == "full" ) {
       return element.season ==year});
 
   testlogo
-    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+    .attr("xlink:href", function(d) { return "nbaLogos/" + logoScale(focusTeam) +" "; })
 
   yearlyPath.data(yearlyPathData)
       .transition()
@@ -2481,7 +2481,7 @@ teamlyButtons.on("mouseover", function(d) {
       return element.teamID ==focusTeam});
 
   testlogo
-    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+    .attr("xlink:href", function(d) { return "nbaLogos/" + logoScale(focusTeam) +" "; })
 
   standingIndices.data(possibleRanks)   
     .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
