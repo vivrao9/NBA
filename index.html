@@ -1,0 +1,3059 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+
+.quad {
+  stroke: black;
+  pointer-events: none;
+  stroke-width: 1px;
+  stroke-opacity: .1;
+  fill: none;
+  fill-opacity: .1;
+  shape-rendering: crispEdges;
+}
+.quad2 {
+  stroke: black;
+  pointer-events: none;
+  stroke-width: 1px;
+  stroke-opacity: .1;
+  fill: none;
+  fill-opacity: .1;
+  shape-rendering: crispEdges;
+}
+
+.colorButton {
+  fill: none;
+  fill-opacity: .1;
+}
+
+.colorButton:hover {
+  fill: purple;
+  fill-opacity: .3;
+}
+
+.orientationButton {
+  opacity: .08;
+  fill: black;
+  stroke: white;
+  stroke-width: 1px;
+}
+
+.orientationButton:hover {
+  opacity: .3;
+  fill: black;
+}
+
+.meshTile {
+  fill:blue;
+  stroke:black;
+  fill-opacity:.1;
+  stroke-opacity:.1;
+  stroke-width:.5px;
+}
+.settingButton {
+  opacity: .08;
+  fill: black;
+  stroke: white;
+  stroke-width: 1px;
+}
+
+.settingButton:hover {
+  opacity: .3;
+  fill: black;
+}
+
+.shadowTile {
+  fill:gray;
+  fill-opacity: .0;
+  stroke:black;
+  stroke-width:.5;
+  stroke-opacity:.04;
+}
+
+.teamlyButton {
+  fill: white;
+  fill-opacity: .0;
+
+}
+
+.teamlySquares {
+  fill: darkblue;
+  fill-opacity: .1;
+}
+
+.scatterPlotCircle {
+  fill: black;
+  fill-opacity: .8;
+}
+
+.teamlyPath {
+  fill: none;
+  opacity: .0;
+  pointer-events: none;
+  stroke: indigo;
+  stroke-width: 1px;
+}
+
+.teamlyPathShadow {
+  fill: none;
+  fill-opacity: .12;
+}
+
+.teamOrderButton {
+  opacity: .08;
+  fill: black;
+  stroke: white;
+  stroke-width: 1px;
+}
+
+.teamOrderButton:hover {
+  opacity: .3;
+  fill: black;
+}
+
+.teamlyAntenna {
+  opacity: .0;
+}
+
+.yearlyAntenna {
+  opacity: .0;
+}
+
+.yearlyPath {
+  stroke: black;
+  opacity: .0;
+  stroke-width: 1px;
+  pointer-events: none;
+  fill: red;
+  fill-opacity: .1;
+}
+
+.yearlyPathSilhouette {
+  fill: none;
+  fill-opacity: .0;
+}
+
+.yearlyButton {
+  opacity: .6;
+  fill: white;
+}
+
+.yearlyButton:hover {
+  fill-opacity: .0;
+  fill: white
+
+}
+
+</style>
+
+<body>
+
+<div id="nba"></div>
+
+<!-- <script src="//d3js.org/d3.v3.min.js"></script> -->
+<script type="text/javascript" src="d3.min.js"></script>
+<!-- <script src="https://rawgit.com/gka/d3-jetpack/master/d3-jetpack.js"></script>-->
+<!-- <script type="text/javascript" src="lib/spiralMothership.js"></script>-->
+<script type="text/javascript" src="functions.js"></script>
+
+<script>
+
+//code
+//var start_time = Date.now();
+
+
+//declare global variables & default values
+var year = 2007;
+var yearsAlone = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016];
+
+var yearsAloneClone = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016];
+var yearsAloneReversed = yearsAloneClone.reverse();
+  yearsAloneReversed.push(2004);
+
+var selectedLeagueRank = 12;
+var possibleRanks = d3.range(1,31);
+
+var game = 500;
+var gamesAlone = d3.range(1,82*12);
+
+var mode = "zoomedOut";
+var modes = ["zoomedOut","zoomedIn"];
+
+var orientation = ["allThree"];
+var orientations = ["winningPctByStanding","winningPctByYear","standingByYear","allThree"];
+
+var orientationButtonTexts = ["Orientation","winning %","by standing","winning %","by season","standing","by season","winning %","by season","by standing"];
+
+var teamOrderButtonTexts = ["Sort Teams","by annual","winning %","by composite","winning %"];
+
+var settingButtonTexts = ["Setting","show full","context","show teams","in isolation","show seasons","in isolation"];
+
+var focusTeam = "LAC";
+var alphaTeams = ["ATL","BOS","BRK","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL","MEM","MIA","MIL","MIN","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS","TOR","UTA","WAS"];
+
+var logos = ["ATL.jpg","BOS.png","BRK.png","CHI.png","CHO.png","CLE.png","DAL.jpg","DEN.png","DET.png","GSW.png","HOU.jpg","IND.png","LAC.jpg","LAL.png","MEM.png","MIA.jpg","MIL.jpg","MIN.png","NOP.jpg","NYK.png","OKC.png","ORL.gif","PHI.png","PHO.jpg","POR.jpg","SAC.jpg","SAS.png","TOR.jpg","UTA.png","WAS.png"];
+
+var colorSpectrum = "teamPrimaryBorders";
+var colorSpectra = ["blues", "teamPrimaries", "blueBorders","teamPrimaryBorders"];
+var blues = ["#f7fbff","#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c","#08306b","#08306b"];
+var teamPrimaries = ["#E03A3E","#008348","#000000","#1D1160","#CE1141","#860038","#007DC5","#4FA8FF","#006BB6","#FDB927","#CE1141","#00275D","#ED174C","#552582","#23375B","#98002E","#00471B","#005083","#002B5C","#006BB6","#007DC3","#007DC5","#ED174C","#E56020","#F0163A","#724C9F","#B6BFBF","#CE1141","#002B5C","#F5002F"];
+
+var teamOrder = "yearlyStanding";
+var teamOrders = ["yearlyStanding", "winningest"];
+
+var setting = "full";
+var settings = ["full","isolateTeams","isolateSeasons"];
+
+var conference = "Western";
+var conferences = ["Eastern","Western"];
+
+var division = "Pacific";
+var divisions = ["Atlantic","Central","Northest","Pacific","Southeast","Southwest"];
+
+var winningPctQuintiles  = [.0,.2,.4,.6,.8,1];
+var winningPctQuintiles2 = [.0,.2,.4,.6,.8,1];
+
+var formatPercent = d3.format(".0%");
+
+var clickState = "unclicked";
+var clickStates = ["unclicked","teamClicked","yearClicked","bothClicked"];
+
+//set margins and chartMargins
+
+var margin = {top: 40, right: 20, bottom: 20, left: 20},
+    width = 1040 - margin.left - margin.right,
+    height = 860 - margin.top - margin.bottom;
+
+var chartMargin = {top: 0, right: 300, bottom: 200, left: 140},
+    chartWidth = width - chartMargin.left - chartMargin.right,
+    chartHeight = height - chartMargin.top - chartMargin.bottom;
+
+
+//scales
+
+var colorScale = d3.scale.ordinal()
+    .domain([0,1,2,3,4,5,6,7,8,9,10])
+    .range(blues);
+
+var teamColorScale = d3.scale.ordinal()
+    .domain(alphaTeams)
+    .range(teamPrimaries);
+
+var logoScale = d3.scale.ordinal()
+    .domain(alphaTeams)
+    .range(logos);
+
+var xWinningPctByStanding = d3.scale.ordinal()
+    .domain(d3.range(1,31))
+    .rangeBands([0, chartWidth], .0);
+
+var yWinningPctByStanding = d3.scale.linear()
+    .domain([0,1])
+    .range([chartHeight, 0]);
+
+var xWinningPctByYear = d3.scale.ordinal()
+    .domain(yearsAlone)
+    .rangeBands([0, chartWidth], .0);
+
+var yWinningPctByYear = d3.scale.linear()
+    .domain([0,1])
+    .range([chartHeight, 0]);
+
+var xStandingByYear = d3.scale.ordinal()
+   .domain(yearsAlone)
+   .rangeBands([0, chartWidth], .0);
+
+var yStandingByYear = d3.scale.ordinal()
+    .domain(d3.range(1,31))
+    .rangeBands([chartHeight, 0], .0);
+
+//functions that have scale-like functionality
+var xAllThree = function(rnk,seas) {
+  return ( xWinningPctByStanding(rnk)+ xWinningPctByYear(seas) ) / 2 ;
+}
+
+var yAllThree = function(rnk,seas,wpct) {
+ return  (yWinningPctByStanding(wpct))/2 + chartHeight / 4   -
+         (xWinningPctByStanding(rnk) )/5  + (xWinningPctByYear(seas))/5;
+}
+
+  //
+  //use fractional lengths of known rangeBands to move around the mesh locally, in steps.
+  //for example, to set vertices of a meshTile, set the pen down at the leftmost point, 
+  //i.e. xAllThree(ddd),yAllThree(ddd), 
+  //then:
+
+  //to move one street block NE along the x-axis: + xWinningPctByStanding.rangeBand()/2
+  //              along the y-axis: - xWinningPctByStanding.rangeBand()/5
+  //to move one street block NE  
+  // & then one avenue block SE along the x-axis: + xWinningPctByStanding.rangeBand()/2 + xWinningPctByYear.rangeBand()/2
+  //              along the y-axis: - xWinningPctByStanding.rangeBand()/5 + xWinningPctByYear.rangeBand()/5
+  //
+  //to move one avenue block SE along the x-axis:                     + xWinningPctByYear.rangeBand()/2
+  //              along the y-axis:                   + xWinningPctByYear.rangeBand()/5
+
+
+///this function is imported from strudel, to use the smooth compression formula for dynamic accordian along the time axis:
+//strudel.spiralMothership.prototype.getRadius(theta,d,v,l)
+
+//it returns the radius of the spiral at the given theta value (in radians), which can serve equally well along linear axes 
+
+//for example
+//console.log(strudel.spiralMothership.prototype.getRadius(3*Math.PI, 0,3,6));
+
+
+////////////////////////////////////////
+
+
+// visuals //
+
+// set up the primary SVG
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+/*
+var panelBackground = svg.append("rect")
+    .style("fill-opacity", 0)
+    .style("stroke", "none")
+    .attr("x",-10)             
+    .attr("y", -20)
+    .attr("width", 125)
+    .attr("height", chartHeight +40)
+*/
+var chart = svg.append("g")
+    .attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")")
+    .attr("class","chart")
+    .attr("width", chartWidth)
+    .attr("height", chartHeight)
+/*
+var chartBackground = chart.append("rect")
+    .style("fill-opacity", .0)
+    .style("stroke", "none")
+    .attr("x",0)             
+    .attr("y", 0)
+    .attr("width", chartWidth)
+    .attr("height", chartHeight)
+*/
+
+
+
+//set up visual elements that do not rely on the primary data set
+
+/*
+var colorButtons = svg.selectAll(".colorButton") 
+    .data(colorSpectra)
+    .enter()
+  .append("rect")
+    .attr("class","colorButton")
+    .attr("x", function(d,i) { return (i*30); }) 
+    .attr("width", 20)
+    .attr("y", chartHeight) 
+    .attr("height", 20)
+*/
+
+var orientationButtons = svg.selectAll(".orientationButton")    
+    .data(orientations)
+    .enter()
+  .append("path")
+    .attr("class","orientationButton")
+    .attr("d", function(d) { return getOrientationButtonCoordinates(d); })
+
+var orientationButtonWireframe = svg.append("path")
+    .style("fill", "none")
+    .style("stroke", "black")
+    .style("stroke-opacity",.5)
+    .attr("d", function(d) { return getOrientationButtonWireframeCoordinates(d); })
+
+var orientationButtonText =svg.selectAll(".orientationButtonText")
+    .data(orientationButtonTexts)
+    .enter()
+  .append("text") 
+    .attr("class","orientationButtonText")
+    .attr("x", function(d) { return getOrientationButtonTextX(d); })             
+    .attr("y", function(d,i) { return getOrientationButtonTextY(d,i); })       
+    .style("fill", "gray")
+    .style("font-style", "italic")  
+    .style("font-size", "14px")
+    .text(function(d) { return (" " + d +" "); })
+
+var teamOrderButtons = svg.selectAll(".teamOrderButton") 
+    .data(teamOrders)
+    .enter()
+  .append("rect")
+    .attr("class", "teamOrderButton")
+    .attr("x", 0)
+    .attr("width", 20)
+    .attr("y", function(d,i) { return (368 + i*40); }) 
+    .attr("height",20)
+
+var teamOrderButtonWireframe = svg.append("rect")
+    .style("fill", "none")
+    .style("stroke", "black")
+    .style("stroke-opacity",.5)
+    .attr("x", 0)
+    .attr("width", 20)
+    .attr("height",20)
+    .attr("y", function(d,i) { 
+      if (teamOrder == "yearlyStanding") {
+          return 368; 
+        } else if (teamOrder == "winningest") {
+          return 408;
+        }
+      }) 
+
+var teamOrderButtonText =svg.selectAll(".teamOrderButtonText")
+    .data(teamOrderButtonTexts)
+    .enter()
+    .append("text") 
+    .attr("class","teamOrderButtonText")
+    .attr("x", function(d) { return getTeamOrderButtonTextX(d); })             
+    .attr("y", function(d,i) { return getTeamOrderButtonTextY(d,i); })       
+    .style("fill", "gray")
+    .style("font-style", "italic")  
+    .style("font-size", "14px")
+    .text(function(d) { return (" " + d +" "); })
+
+var settingButtons = svg.selectAll(".settingButton") 
+    .data(settings)
+    .enter()
+  .append("rect")
+    .attr("class", "settingButton")
+     .attr("x", 0)
+    .attr("width", 20)
+    .attr("y", function(d,i) { return (468 + i*40); }) 
+    .attr("height",20)
+
+var settingButtonWireframe= svg.append("rect")
+    .style("fill", "none")
+    .style("stroke", "black")
+    .style("stroke-opacity",.5)
+    .attr("x", 0)
+    .attr("width", 20)
+    .attr("height",20)
+    .attr("y", function(d,i) { 
+      if (setting == "full") {
+          return 468; 
+        } else if (teamOrder == "isolateTeams") {
+          return 508;
+        }else if (teamOrder == "isolateSeasons") {
+          return 548;
+        }
+      }) 
+var settingButtonText =svg.selectAll(".settingButtonText")
+    .data(settingButtonTexts)
+    .enter()
+    .append("text") 
+    .attr("class","settingButtonText")
+    .attr("x", function(d) { return getSettingButtonTextX(d); })             
+    .attr("y", function(d,i) { return getSettingButtonTextY(d,i); })       
+    .style("fill", "gray")
+    .style("font-style", "italic")  
+    .style("font-size", "14px")
+    .text(function(d) { return (" " + d +" "); })
+
+var title = svg.append("text")
+        .attr("x", 290 )             
+        .attr("y", -10)
+        .style("font-size", "22px")   
+        .text("Twelve Seasons of NBA Data");
+
+var testlogo = svg.append("svg:image")
+    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+    .attr("width",80)
+    .attr("height", 80)
+    .style("opacity",.8)
+    .attr("x", 0)
+    .attr("y",0);
+
+
+//declaring variables so they are saved to the global namespace
+
+var data, 
+dataworks, 
+byPct, 
+byPctWithIndex, 
+seasons, 
+unkeyedData, 
+unkeyedDataWithRank,
+ranks,
+superdata,
+yearlySuperdata,
+superdataByTeam,
+superdataMeshTeamlyFocus,
+unkeyedSuperdataByTeam,
+superdataByVariance,
+superdata2016,
+superdataFocus,
+superdataByVariance;
+
+
+/////////////////////////////////
+
+//import data, and corral it into usefulness
+//should probably be done on the server-side for data any more complex than this
+
+d3.json("nbadata.json", function(error, json) {
+if (error) return console.warn(error);
+data = json;
+
+//take original json, add a field for winning pct, and store it in dataworks
+  dataworks = json.map(function(d,i) {
+
+    return {
+      season: d.season,
+      teamID: d.teamID,
+      identifier: d.teamID+d.season,
+      conference: d.conference,
+      division: d.division,
+      wins: d.wins,
+      games: d.games,
+      winningPct: Math.round(1000*d.wins/d.games)/1000
+   
+    };
+    
+
+  });
+
+
+//sort dataworks by winning pct, and store the result in byPct
+  byPct = dataworks.sort(function(x, y){
+    return d3.ascending(x.winningPct, y.winningPct);
+  });
+
+//filter to narrow field by conference or division, as desired
+   var byPctFiltered = byPct //.filter(function(element) {
+      //return element.division ==division});
+      //return element.conference ==conference});
+
+
+//
+var numberOfTeams = byPctFiltered.length / 12;
+
+
+
+//formula for yearly standing, to be used with data inside callback
+
+var standing = function(b){
+    return (b  - numberOfTeams*Math.floor(b/numberOfTeams))
+  };
+
+//take byPct, add field for overall rank called placing, and store it in byPctWithIndex
+  byPctWithIndex = byPctFiltered.map(function(d,i) {
+
+    return {
+      season: d.season,
+      teamID: d.teamID,
+      identifier: d.identifier,
+      conference: d.conference,
+      division: d.division,
+      wins: d.wins,
+      games: d.games,
+      winningPct: d.winningPct,
+      placing:i+1+"",
+    };
+    
+
+  });
+
+
+//nest byPctWithIndex by season, sort it chronologically, and store it in seasons
+  seasons = d3.nest()
+      .key(function(d) { return d.season; })
+      .sortKeys(d3.ascending)
+      .entries(byPctWithIndex);
+
+
+//take that sorted nest and unnest it, storing it in unkeyedData
+//to do: figure out how to automate this with a loop
+
+  unkeyedData = seasons[0].values.concat(
+  seasons[1].values,
+  seasons[2].values,
+  seasons[3].values,
+  seasons[4].values,
+  seasons[5].values,
+  seasons[6].values,
+  seasons[7].values,
+  seasons[8].values,
+  seasons[9].values,
+  seasons[10].values,
+  seasons[11].values);
+
+
+//take unkeyedData, add a field for leagueRank and overallRank, and store it in unkeyedDataWithRank
+  unkeyedDataWithRank = unkeyedData.map(function(d,i) {
+
+  return {
+    season: d.season,
+    teamID: d.teamID,
+    identifier: d.identifier,
+    conference: d.conference,
+    division: d.division,
+    wins: d.wins,
+    games: d.games,
+    winningPct: d.winningPct,
+    overallRank: i+1+"",
+    leagueRank: standing(i)+1+""
+      
+  };
+
+  });
+
+//rollup unkeyedDataWithRank to form new summary fields, and store the new data in ranks
+  ranks = d3.nest()
+      .key(function(d) { return d.leagueRank; })
+      .rollup(function(values) { 
+        return {
+          medianWinningPct: d3.median(values, function(d) {return d.winningPct }),
+          meanWinningPct: d3.mean(values, function(d) {return d.winningPct }),
+          medianWins: d3.median(values, function(d) {return d.wins }),
+          meanWins: d3.mean(values, function(d) {return d.wins })
+           };
+          })
+      .entries(unkeyedDataWithRank);
+
+//add each new field to unkeyedDataWithRank, one by one
+  for(i=0;i<unkeyedDataWithRank.length;i++){
+    unkeyedDataWithRank[i].medianWins=ranks[standing(i)].values.medianWins;
+  };
+
+  for(i=0;i<unkeyedDataWithRank.length;i++){
+    unkeyedDataWithRank[i].meanWins=ranks[standing(i)].values.meanWins;
+  };
+
+  for(i=0;i<unkeyedDataWithRank.length;i++){
+    unkeyedDataWithRank[i].medianWinningPct=ranks[standing(i)].values.medianWinningPct;
+  };
+
+  for(i=0;i<unkeyedDataWithRank.length;i++){
+    unkeyedDataWithRank[i].meanWinningPct=ranks[standing(i)].values.meanWinningPct;
+  };
+
+//add neigbor stats...
+//for every object in superdata, add priorWinningPct and contingencies for the first column and first row
+
+for (i=0; i<unkeyedDataWithRank.length; i++) {
+
+  if (unkeyedDataWithRank[i].season == 2005) {
+  unkeyedDataWithRank[i].priorWinningPctWithinStanding=unkeyedDataWithRank[i].medianWinningPct;
+  } else {
+  unkeyedDataWithRank[i].priorWinningPctWithinStanding=unkeyedDataWithRank[i-30].winningPct;
+} }
+
+for (i=0; i<unkeyedDataWithRank.length; i++) {
+
+  if (unkeyedDataWithRank[i].season == 2005) {
+  unkeyedDataWithRank[i].priorSeason=unkeyedDataWithRank[i].season;
+  } else {
+  unkeyedDataWithRank[i].priorSeason=unkeyedDataWithRank[i-30].season;
+} }
+
+for (i=0; i<unkeyedDataWithRank.length; i++) {
+ 
+  if (unkeyedDataWithRank[i].leagueRank == "1") {
+  unkeyedDataWithRank[i].priorWinningPctWithinYear=(unkeyedDataWithRank[i].winningPct-.03);
+  } else {
+  unkeyedDataWithRank[i].priorWinningPctWithinYear=unkeyedDataWithRank[i-1].winningPct;
+} }
+
+// add fourth coordinate, doubly prior, with some &&s and eithers!!!
+for (i=0; i<unkeyedDataWithRank.length; i++) {
+ 
+  if (unkeyedDataWithRank[i].leagueRank == "1" && unkeyedDataWithRank[i].season == 2005 ) {
+
+  unkeyedDataWithRank[i].doublyPriorWinningPct=(unkeyedDataWithRank[i].medianWinningPct-.03);
+   } 
+   else if (unkeyedDataWithRank[i].season == 2005) 
+   {
+  unkeyedDataWithRank[i].doublyPriorWinningPct=unkeyedDataWithRank[i-1].medianWinningPct;
+    } 
+   else if (unkeyedDataWithRank[i].leagueRank == "1") 
+   {
+  unkeyedDataWithRank[i].doublyPriorWinningPct=(unkeyedDataWithRank[i-30].winningPct-.03);
+    } 
+    else 
+    {
+  unkeyedDataWithRank[i].doublyPriorWinningPct=unkeyedDataWithRank[i-31].winningPct;
+} 
+
+}
+//we have everything except team data
+
+//now also add team rollup stats
+var teamAverages = d3.nest()
+  .key(function(d) { return d.teamID; })
+  .sortKeys(d3.ascending)
+  .rollup(function(values) {
+      return {
+          medianTeamWinningPct: d3.median(values, function(d) {return d.winningPct }),
+          meanTeamWinningPct: d3.mean(values, function(d) {return d.winningPct }),
+          medianTeamWins: d3.median(values, function(d) {return d.wins }),
+          meanTeamWins: d3.mean(values, function(d) {return d.wins }),
+          medianTeamLeagueRank: Math.floor(d3.median(values, function(d) {return d.leagueRank }))
+
+           };
+          })
+  .entries(unkeyedDataWithRank);
+
+dataByTeam = d3.nest()
+   .key(function(d) { return d.teamID; })
+   .sortKeys(d3.ascending)
+   .entries(unkeyedDataWithRank);
+
+
+
+  unkeyedDataByTeam = dataByTeam[0].values.concat(
+  dataByTeam[1].values,
+  dataByTeam[2].values,
+  dataByTeam[3].values,
+  dataByTeam[4].values,
+  dataByTeam[5].values,
+  dataByTeam[6].values,
+  dataByTeam[7].values,
+  dataByTeam[8].values,
+  dataByTeam[9].values,
+  dataByTeam[10].values,
+  dataByTeam[11].values,
+  dataByTeam[12].values,
+  dataByTeam[13].values,
+  dataByTeam[14].values,
+  dataByTeam[15].values,
+  dataByTeam[16].values,
+  dataByTeam[17].values,
+  dataByTeam[18].values,
+  dataByTeam[19].values,
+  dataByTeam[20].values,
+  dataByTeam[21].values,
+  dataByTeam[22].values,
+  dataByTeam[23].values,
+  dataByTeam[24].values,
+  dataByTeam[25].values,
+  dataByTeam[26].values,
+  dataByTeam[27].values,
+  dataByTeam[28].values,
+  dataByTeam[29].values);
+
+var progressiveTeamAverages = [];
+/*
+for (i=0; i<12; i++) {
+if (dataByTeam[i].season = 2005 ){
+progressiveTeamAverages.push(unkeyedDataByTeam[i].winningPct);
+} else if (dataByTeam[i].season = 2006 ){
+progressiveTeamAverages.push((unkeyedDataByTeam[i].winningPct+unkeyedDataByTeam[i-1].winningPct));
+}}
+*/
+
+  for(i=0;i<unkeyedDataByTeam.length;i++){
+    unkeyedDataByTeam[i].medianTeamWinningPct=teamAverages[Math.floor(i/12)].values.medianTeamWinningPct;
+  };
+
+  for(i=0;i<unkeyedDataByTeam.length;i++){
+    unkeyedDataByTeam[i].meanTeamWinningPct=teamAverages[Math.floor(i/12)].values.meanTeamWinningPct;
+  };
+
+  for(i=0;i<unkeyedDataByTeam.length;i++){
+    unkeyedDataByTeam[i].medianTeamWins=teamAverages[Math.floor(i/12)].values.medianTeamWins;
+  };
+
+  for(i=0;i<unkeyedDataByTeam.length;i++){
+    unkeyedDataByTeam[i].meanTeamWins=teamAverages[Math.floor(i/12)].values.meanTeamWins;
+  };
+
+  for(i=0;i<unkeyedDataByTeam.length;i++){
+    unkeyedDataByTeam[i].medianTeamLeagueRank=teamAverages[Math.floor(i/12)].values.medianTeamLeagueRank;
+  };
+    //add two additional fields that depend on the rollup stats
+  for (i=0; i<unkeyedDataByTeam.length; i++) {
+
+  if (unkeyedDataByTeam[i].season == 2005) {
+  unkeyedDataByTeam[i].priorWinningPctWithinTeam=unkeyedDataByTeam[i].winningPct;
+  unkeyedDataByTeam[i].priorLeagueRankWithinTeam=unkeyedDataByTeam[i].leagueRank;
+   } else {
+  unkeyedDataByTeam[i].priorWinningPctWithinTeam=unkeyedDataByTeam[i-1].winningPct;
+  unkeyedDataByTeam[i].priorLeagueRankWithinTeam=unkeyedDataByTeam[i-1].leagueRank;
+  };
+  if (unkeyedDataByTeam[i].season == 2016) {
+  unkeyedDataByTeam[i].subsequentWinningPctWithinTeam=unkeyedDataByTeam[i].winningPct;
+  unkeyedDataByTeam[i].subsequentLeagueRankWithinTeam=unkeyedDataByTeam[i].leagueRank;
+   } else {
+  unkeyedDataByTeam[i].subsequentWinningPctWithinTeam=unkeyedDataByTeam[i+1].winningPct;
+  unkeyedDataByTeam[i].subsequentLeagueRankWithinTeam=unkeyedDataByTeam[i+1].leagueRank;
+  };
+   }
+//adding fields that dynamically accummulate as time proceeds
+//including wins, winningPct, league rank (rounded down to an integer), and, in the next loop ??, standard deviation of winningPct
+//accumulatedWinningPctMeanWithinTeam could be modified to be weighted for strike year, etc.
+  for (i=0; i<unkeyedDataByTeam.length; i++) {
+
+    if (unkeyedDataByTeam[i].season == 2005) {
+  
+      unkeyedDataByTeam[i].accumulatedWins=unkeyedDataByTeam[i].wins;
+  
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam=unkeyedDataByTeam[i].winningPct;
+      
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank= Number(unkeyedDataByTeam[i].leagueRank);
+
+
+  } else if (unkeyedDataByTeam[i].season == 2006) {
+  
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins+
+        unkeyedDataByTeam[i-1].wins
+      );
+  
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct
+        ) / ((i+1)%12)
+      );
+  
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+  } else if (unkeyedDataByTeam[i].season == 2007) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank)
+        ) / ((i+1)%12)
+      );
+      
+  } else if (unkeyedDataByTeam[i].season == 2008) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins        
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank)
+        ) / ((i+1)%12)
+      );
+        
+    } else if (unkeyedDataByTeam[i].season == 2009) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins        
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2010) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins       
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2011) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins      
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2012) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins +
+        unkeyedDataByTeam[i-7].wins      
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct +
+          unkeyedDataByTeam[i-7].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank) +
+          Number(unkeyedDataByTeam[i-7].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2013) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins +
+        unkeyedDataByTeam[i-7].wins +
+        unkeyedDataByTeam[i-8].wins      
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct +
+          unkeyedDataByTeam[i-7].winningPct +
+          unkeyedDataByTeam[i-8].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank) +
+          Number(unkeyedDataByTeam[i-7].leagueRank) +
+          Number(unkeyedDataByTeam[i-8].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2014) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins +
+        unkeyedDataByTeam[i-7].wins +
+        unkeyedDataByTeam[i-8].wins +
+        unkeyedDataByTeam[i-9].wins      
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct +
+          unkeyedDataByTeam[i-7].winningPct +
+          unkeyedDataByTeam[i-8].winningPct +
+          unkeyedDataByTeam[i-9].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank) +
+          Number(unkeyedDataByTeam[i-7].leagueRank) +
+          Number(unkeyedDataByTeam[i-8].leagueRank) +
+          Number(unkeyedDataByTeam[i-9].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2015) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins +
+        unkeyedDataByTeam[i-7].wins +
+        unkeyedDataByTeam[i-8].wins +
+        unkeyedDataByTeam[i-9].wins +
+        unkeyedDataByTeam[i-10].wins     
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct +
+          unkeyedDataByTeam[i-7].winningPct +
+          unkeyedDataByTeam[i-8].winningPct +
+          unkeyedDataByTeam[i-9].winningPct +
+          unkeyedDataByTeam[i-10].winningPct
+        ) / ((i+1)%12)
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank) +
+          Number(unkeyedDataByTeam[i-7].leagueRank) +
+          Number(unkeyedDataByTeam[i-8].leagueRank) +
+          Number(unkeyedDataByTeam[i-9].leagueRank) +
+          Number(unkeyedDataByTeam[i-10].leagueRank)
+        ) / ((i+1)%12)
+      );
+
+    } else if (unkeyedDataByTeam[i].season == 2016) {
+
+      unkeyedDataByTeam[i].accumulatedWins = (
+        unkeyedDataByTeam[i].wins +
+        unkeyedDataByTeam[i-1].wins +
+        unkeyedDataByTeam[i-2].wins +
+        unkeyedDataByTeam[i-3].wins +
+        unkeyedDataByTeam[i-4].wins +
+        unkeyedDataByTeam[i-5].wins +
+        unkeyedDataByTeam[i-6].wins +
+        unkeyedDataByTeam[i-7].wins +
+        unkeyedDataByTeam[i-8].wins +
+        unkeyedDataByTeam[i-9].wins +
+        unkeyedDataByTeam[i-10].wins +
+        unkeyedDataByTeam[i-11].wins     
+      );
+
+      unkeyedDataByTeam[i].accumulatedWinningPctMeanWithinTeam = (
+        (
+          unkeyedDataByTeam[i].winningPct + 
+          unkeyedDataByTeam[i-1].winningPct +
+          unkeyedDataByTeam[i-2].winningPct +
+          unkeyedDataByTeam[i-3].winningPct +
+          unkeyedDataByTeam[i-4].winningPct +
+          unkeyedDataByTeam[i-5].winningPct +
+          unkeyedDataByTeam[i-6].winningPct +
+          unkeyedDataByTeam[i-7].winningPct +
+          unkeyedDataByTeam[i-8].winningPct +
+          unkeyedDataByTeam[i-9].winningPct +
+          unkeyedDataByTeam[i-10].winningPct +
+          unkeyedDataByTeam[i-11].winningPct
+        ) / 12
+      );
+
+      unkeyedDataByTeam[i].accumulatedMeanTeamLeagueRank = Math.floor(
+        (
+          Number(unkeyedDataByTeam[i].leagueRank) + 
+          Number(unkeyedDataByTeam[i-1].leagueRank) +
+          Number(unkeyedDataByTeam[i-2].leagueRank) +
+          Number(unkeyedDataByTeam[i-3].leagueRank) +
+          Number(unkeyedDataByTeam[i-4].leagueRank) +
+          Number(unkeyedDataByTeam[i-5].leagueRank) +
+          Number(unkeyedDataByTeam[i-6].leagueRank) +
+          Number(unkeyedDataByTeam[i-7].leagueRank) +
+          Number(unkeyedDataByTeam[i-8].leagueRank) +
+          Number(unkeyedDataByTeam[i-9].leagueRank) +
+          Number(unkeyedDataByTeam[i-10].leagueRank) +
+          Number(unkeyedDataByTeam[i-11].leagueRank)
+        ) / 12
+      );
+  } }
+
+//add teamMeanWinningPctRank
+var teamMeanWinningPctRanks = d3.nest()
+  .key(function(d) { return d.meanTeamWinningPct; })
+  .sortKeys(d3.ascending)
+  .entries(unkeyedDataByTeam)
+
+var tempArray = [];
+for (i=0; i<teamMeanWinningPctRanks.length; i++)
+  tempArray.push(teamMeanWinningPctRanks[i].values[0].teamID);
+
+for(i=0;i<unkeyedDataByTeam.length;i++){
+   unkeyedDataByTeam[i].teamMeanWinningPctRank=""+(1+tempArray.indexOf(unkeyedDataByTeam[i].teamID));
+  };
+
+var teamMeanWinningPctRanksReversed = teamMeanWinningPctRanks.reverse();
+
+var unkeyedMeanWinningPctRanksReversed = teamMeanWinningPctRanksReversed[0].values.concat(
+  teamMeanWinningPctRanksReversed [1].values,
+  teamMeanWinningPctRanksReversed [2].values,
+  teamMeanWinningPctRanksReversed [3].values,
+  teamMeanWinningPctRanksReversed [4].values,
+  teamMeanWinningPctRanksReversed [5].values,
+  teamMeanWinningPctRanksReversed [6].values,
+  teamMeanWinningPctRanksReversed [7].values,
+  teamMeanWinningPctRanksReversed [8].values,
+  teamMeanWinningPctRanksReversed [9].values,
+  teamMeanWinningPctRanksReversed [10].values,
+  teamMeanWinningPctRanksReversed [11].values,
+  teamMeanWinningPctRanksReversed [12].values,
+  teamMeanWinningPctRanksReversed [13].values,
+  teamMeanWinningPctRanksReversed [14].values,
+  teamMeanWinningPctRanksReversed [15].values,
+  teamMeanWinningPctRanksReversed [16].values,
+  teamMeanWinningPctRanksReversed [17].values,
+  teamMeanWinningPctRanksReversed [18].values,
+  teamMeanWinningPctRanksReversed [19].values,
+  teamMeanWinningPctRanksReversed [20].values,
+  teamMeanWinningPctRanksReversed [21].values,
+  teamMeanWinningPctRanksReversed [22].values,
+  teamMeanWinningPctRanksReversed [23].values,
+  teamMeanWinningPctRanksReversed [24].values,
+  teamMeanWinningPctRanksReversed [25].values,
+  teamMeanWinningPctRanksReversed [26].values,
+  teamMeanWinningPctRanksReversed [27].values,
+  teamMeanWinningPctRanksReversed [28].values,
+  teamMeanWinningPctRanksReversed [29].values);
+
+
+for(i=0;i<unkeyedMeanWinningPctRanksReversed.length;i++){
+  if (i < 348) {
+   unkeyedMeanWinningPctRanksReversed[i].priorWinningPctWithinMeanTeamRanks=unkeyedMeanWinningPctRanksReversed[i+12].winningPct;
+  } else {
+   unkeyedMeanWinningPctRanksReversed[i].priorWinningPctWithinMeanTeamRanks=(unkeyedMeanWinningPctRanksReversed[i].winningPct-.03);
+  }
+  };
+
+//take unkeyedDataWithRank, and map out everything we're gonna need into an array called superdata
+superdata = unkeyedMeanWinningPctRanksReversed.map(function(d,i) {
+
+  return {
+    season: d.season,
+    teamID: d.teamID,
+    identifier: d.identifier,
+    conference: d.conference,
+    division: d.division,
+    wins: d.wins,
+    games: d.games,
+    accumulatedWins: d.accumulatedWins,
+    accumulatedWinningPctMeanWithinTeam: d.accumulatedWinningPctMeanWithinTeam,
+    accumulatedMeanTeamLeagueRank: d.accumulatedMeanTeamLeagueRank,
+    medianWins: d.medianWins,
+    meanWins: d.meanWins,
+    medianTeamWins: d.medianTeamWins,
+    meanTeamWins: d.meanTeamWins,
+    winningPct: d.winningPct,
+    medianWinningPct: d.medianWinningPct,
+    meanWinningPct: d.meanWinningPct, 
+    medianTeamLeagueRank: d.medianTeamLeagueRank,
+    medianTeamWinningPct: d.medianTeamWinningPct,
+    meanTeamWinningPct: d.meanTeamWinningPct,
+    priorLeagueRankWithinTeam: d.priorLeagueRankWithinTeam,
+    priorSeason: d.priorSeason,
+    priorWinningPctWithinMeanTeamRanks: d.priorWinningPctWithinMeanTeamRanks,
+    priorWinningPctWithinYear: d.priorWinningPctWithinYear,
+    priorWinningPctWithinStanding: d.priorWinningPctWithinStanding,
+    priorWinningPctWithinTeam: d.priorWinningPctWithinTeam,
+    doublyPriorWinningPct: d.doublyPriorWinningPct,
+    subsequentWinningPctWithinTeam: d.subsequentWinningPctWithinTeam,
+    subsequentLeagueRankWithinTeam: d.subsequentLeagueRankWithinTeam,
+    teamMeanWinningPctRank: d.teamMeanWinningPctRank,
+    leagueRank: d.leagueRank,
+    overallRank: d.overallRank,
+    barTop: d3.max([d.medianWinningPct, d.winningPct]),
+    barBase: d3.min([d.medianWinningPct, d.winningPct]),
+    barHeight: d3.max([d.medianWinningPct, d.winningPct]) - d3.min([d.medianWinningPct, d.winningPct]),
+    valence: Math.floor(d.winningPct - d.medianWinningPct) + Math.ceil(d.winningPct - d.medianWinningPct)
+    };
+  });
+
+var superdataMesh = superdata.map(function(d,i) {
+
+  return {
+    season: d.season,
+    teamID: d.teamID,
+    identifier: d.identifier,
+    conference: d.conference,
+    division: d.division,
+    wins: d.wins,
+    games: d.games,
+    accumulatedWins: d.accumulatedWins,
+    accumulatedWinningPctMeanWithinTeam: d.accumulatedWinningPctMeanWithinTeam,
+    accumulatedMeanTeamLeagueRank: d.accumulatedMeanTeamLeagueRank,
+    medianWins: d.medianWins,
+    meanWins: d.meanWins,
+    medianTeamWins: d.medianTeamWins,
+    meanTeamWins: d.meanTeamWins,
+    winningPct: d.winningPct,
+    medianWinningPct: d.medianWinningPct,
+    meanWinningPct: d.meanWinningPct, 
+    medianTeamLeagueRank: d.medianTeamLeagueRank,
+    medianTeamWinningPct: d.medianTeamWinningPct,
+    meanTeamWinningPct: d.meanTeamWinningPct,
+    priorLeagueRankWithinTeam: d.priorLeagueRankWithinTeam,
+    priorSeason: d.priorSeason,
+    priorWinningPctWithinMeanTeamRanks: d.priorWinningPctWithinMeanTeamRanks,
+    priorWinningPctWithinYear: d.priorWinningPctWithinYear,
+    priorWinningPctWithinStanding: d.priorWinningPctWithinStanding,
+    priorWinningPctWithinTeam: d.priorWinningPctWithinTeam,
+    doublyPriorWinningPct: d.doublyPriorWinningPct,
+    subsequentWinningPctWithinTeam: d.subsequentWinningPctWithinTeam,
+    subsequentLeagueRankWithinTeam: d.subsequentLeagueRankWithinTeam,
+    teamMeanWinningPctRank: d.teamMeanWinningPctRank,
+    leagueRank: d.leagueRank,
+    overallRank: d.overallRank,
+    barTop: d3.max([d.medianWinningPct, d.winningPct]),
+    barBase: d3.min([d.medianWinningPct, d.winningPct]),
+    barHeight: d3.max([d.medianWinningPct, d.winningPct]) - d3.min([d.medianWinningPct, d.winningPct]),
+    valence: Math.floor(d.winningPct - d.medianWinningPct) + Math.ceil(d.winningPct - d.medianWinningPct)
+    };
+  });
+
+var superdataMeshShadow = superdata.map(function(d,i) {
+
+  return {
+    season: d.season,
+    teamID: d.teamID,
+    identifier: d.identifier,
+    conference: d.conference,
+    division: d.division,
+    wins: d.wins,
+    games: d.games,
+    accumulatedWins: d.accumulatedWins,
+    accumulatedWinningPctMeanWithinTeam: d.accumulatedWinningPctMeanWithinTeam,
+    accumulatedMeanTeamLeagueRank: d.accumulatedMeanTeamLeagueRank,
+    medianWins: d.medianWins,
+    meanWins: d.meanWins,
+    medianTeamWins: d.medianTeamWins,
+    meanTeamWins: d.meanTeamWins,
+    winningPct: d.winningPct,
+    medianWinningPct: d.medianWinningPct,
+    meanWinningPct: d.meanWinningPct, 
+    medianTeamLeagueRank: d.medianTeamLeagueRank,
+    medianTeamWinningPct: d.medianTeamWinningPct,
+    meanTeamWinningPct: d.meanTeamWinningPct,
+    priorLeagueRankWithinTeam: d.priorLeagueRankWithinTeam,
+    priorSeason: d.priorSeason,
+    priorWinningPctWithinMeanTeamRanks: d.priorWinningPctWithinMeanTeamRanks,
+    priorWinningPctWithinYear: d.priorWinningPctWithinYear,
+    priorWinningPctWithinStanding: d.priorWinningPctWithinStanding,
+    priorWinningPctWithinTeam: d.priorWinningPctWithinTeam,
+    doublyPriorWinningPct: d.doublyPriorWinningPct,
+    subsequentWinningPctWithinTeam: d.subsequentWinningPctWithinTeam,
+    subsequentLeagueRankWithinTeam: d.subsequentLeagueRankWithinTeam,
+    teamMeanWinningPctRank: d.teamMeanWinningPctRank,
+    leagueRank: d.leagueRank,
+    overallRank: d.overallRank,
+    barTop: d3.max([d.medianWinningPct, d.winningPct]),
+    barBase: d3.min([d.medianWinningPct, d.winningPct]),
+    barHeight: d3.max([d.medianWinningPct, d.winningPct]) - d3.min([d.medianWinningPct, d.winningPct]),
+    valence: Math.floor(d.winningPct - d.medianWinningPct) + Math.ceil(d.winningPct - d.medianWinningPct)
+    };
+  });
+
+var yearlyPathData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+var yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+//all the teams, nested in alpha order
+superdataByTeam = d3.nest()
+      .key(function(d) { return d.teamID; })
+      .sortKeys(d3.ascending)
+      .entries(superdata);
+
+//just the focus team data
+teamlySuperdata = superdata.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+teamlySuperdataShadow = superdata.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+superdataMeshTeamlyFocus = superdataMesh.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+superdataMeshYearlyFocus = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+superdataFocus = teamlySuperdata.filter(function(element) {
+      return element.season ==year});
+
+//create another clone of superdata called littleSuperdata so it can by modified in the process
+//of sorting, rather than corrupting superdata itself
+littleSuperdata = superdata.map(function(d,i) {
+
+  return {
+    season: d.season,
+    teamID: d.teamID,
+    identifier: d.identifier,
+    conference: d.conference,
+    division: d.division,
+    wins: d.wins,
+    games: d.games,
+    accumulatedWins: d.accumulatedWins,
+    accumulatedWinningPctMeanWithinTeam: d.accumulatedWinningPctMeanWithinTeam,
+    accumulatedMeanTeamLeagueRank: d.accumulatedMeanTeamLeagueRank,
+    medianWins: d.medianWins,
+    meanWins: d.meanWins,
+    medianTeamWins: d.medianTeamWins,
+    meanTeamWins: d.meanTeamWins,
+    winningPct: d.winningPct,
+    medianWinningPct: d.medianWinningPct,
+    meanWinningPct: d.meanWinningPct, 
+    medianTeamLeagueRank: d.medianTeamLeagueRank,
+    medianTeamWinningPct: d.medianTeamWinningPct,
+    meanTeamWinningPct: d.meanTeamWinningPct,
+    priorLeagueRankWithinTeam: d.priorLeagueRankWithinTeam,
+    priorSeason: d.priorSeason,
+    priorWinningPctWithinMeanTeamRanks: d.priorWinningPctWithinMeanTeamRanks,
+    priorWinningPctWithinYear: d.priorWinningPctWithinYear,
+    priorWinningPctWithinStanding: d.priorWinningPctWithinStanding,
+    priorWinningPctWithinTeam: d.priorWinningPctWithinTeam,
+    doublyPriorWinningPct: d.doublyPriorWinningPct,
+    subsequentWinningPctWithinTeam: d.subsequentWinningPctWithinTeam,
+    subsequentLeagueRankWithinTeam: d.subsequentLeagueRankWithinTeam,
+    teamMeanWinningPctRank: d.teamMeanWinningPctRank,
+    leagueRank: d.leagueRank,
+    overallRank: d.overallRank,
+    barTop: d3.max([d.medianWinningPct, d.winningPct]),
+    barBase: d3.min([d.medianWinningPct, d.winningPct]),
+    barHeight: d3.max([d.medianWinningPct, d.winningPct]) - d3.min([d.medianWinningPct, d.winningPct]),
+    valence: Math.floor(d.winningPct - d.medianWinningPct) + Math.ceil(d.winningPct - d.medianWinningPct)
+    };
+  });
+
+//sort littleSuperdata by variance to optimize drawing order
+superdataByVariance = littleSuperdata.sort(function(x, y){
+    return d3.descending(x.barHeight, y.barHeight);
+  });
+
+//create a new array for of a given year, as set by buttons 
+yearlySuperdata = superdata.filter(function(element) {
+      return element.season ==year});
+
+///////////////////////////
+//draw elements with this newly corralled data, from background to foreground
+
+var quintileQuadrilateralBack = chart.selectAll(".quad")
+    .data(winningPctQuintiles)
+    .enter().append("path")
+      .attr("class", "quad")
+      .attr("d", function(d) { return getQuintileQuadrilateralBackCoordinates(d); })
+
+var winningPctIndices = chart.selectAll(".winningPctIndex")    
+    .data(winningPctQuintiles)
+    .enter()
+    .append("text") 
+    .attr("class","winningPctIndex")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "10px")   
+    .style("opacity", function(d) { return getWinningPctIndicesOpacity(d); })
+    .style("fill", "gray")  
+    .text(function(d) { return (" "+ formatPercent(d)  + " ") ; })
+    .attr("x", function(d) { return getWinningPctIndicesX(d); })           
+    .attr("y", function(d) { return getWinningPctIndicesY(d); })
+
+var winningPctFocus = chart.selectAll(".winningPctFocus")    
+    .data(superdataFocus)
+    .enter()
+    .append("text") 
+    .attr("class","winningPctFocus")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "10px")   
+    .style("opacity", 0)
+    .style("fill", "black")  
+    .text(function(d) { return (" "+ formatPercent(d.winningPct)  + " ") ; })
+    .attr("x", function(d) { return getWinningPctFocusX(d); })           
+    .attr("y", function(d) { return getWinningPctFocusY(d); })
+
+var titleSeason = svg.selectAll(".titleSeason")    
+    .data(yearsAlone)
+    .enter()
+    .append("text") 
+    .attr("class","titleSeason")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "14px") 
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+    .style("fill", "gray")  
+    .text(function(d) { return (" " + d + " Standings") ; })
+    .attr("x", 784)           
+    .attr("y", -14)
+
+var givenSeason = svg.selectAll(".givenSeason")    
+    .data(yearsAlone)
+    .enter()
+    .append("text") 
+    .attr("class","givenSeason")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "13px") 
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+    .style("fill", "steelblue")  
+    .text(function(d) { return ("season:    " + (d-1) +" " +" / " + d + " ") ; })
+    .attr("x", 0)           
+    .attr("y", 100)
+
+var givenStats = svg.selectAll(".givenStats")    
+    .data(superdata)
+    .enter()
+    .append("text") 
+    .attr("class","givenStats")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "13px")  
+    .style("opacity", function(d) { return getStatsOpacity(d); }) 
+    .style("fill", "steelblue") 
+    .text(function(d) { return ("wins/losses: " + d.wins + " / "  + (d.games - d.wins) +" ") ; })
+    .attr("x", 0)           
+    .attr("y", 136)
+
+var givenStanding = svg.selectAll(".givenStanding")    
+    .data(superdata)
+    .enter()
+    .append("text") 
+    .attr("class","givenStanding")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "13px")
+    .style("opacity", function(d) { return getStatsOpacity(d); }) 
+    .style("fill", "steelblue") 
+    .text(function(d) { return ("standing: "  + getOrdinalSuffixOf(d.leagueRank) + " " ); })
+    .attr("x", 0)           
+    .attr("y", 118)
+
+var seasonIndices = chart.selectAll(".year")    
+    .data(yearsAlone)
+    .enter()
+    .append("text") 
+    .attr("class","year")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "8px")   
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+    .style("fill", "red")  
+    .text(function(d) { return (" " +d +" ") ; })
+    .attr("x", function(d) { return getSeasonIndicesX(d); })           
+    .attr("y", function(d) { return getSeasonIndicesY(d); })
+
+var standingIndices = chart.selectAll(".standing")    
+    .data(possibleRanks)
+    .enter()
+    .append("text") 
+    .attr("class","standing")
+    .attr("text-anchor", "bottom")  
+    .style("font-size", "7px")   
+    .style("opacity", .2)
+    .style("fill", "gray")  
+    .text(function(d) { return (" " + (31-d) +" ") ; })
+    .attr("x", function(d) { return getStandingIndicesX(d); })           
+    .attr("y", function(d) { return getStandingIndicesY(d); })
+
+var teamlyNames = svg.selectAll(".teamlyNames")    
+    .data(superdataByTeam)
+    .enter()
+    .append("text") 
+    .attr("class","teamlyNames") 
+    .style("font-size", "10px")   
+    .style("opacity", .3)
+    .style("fill", "gray")  
+    .text(function(d) { return (" " + (d.values[year-2005].teamID) +" ") ; })
+    .attr("x", function(d) { return getTeamlyNamesX(d); })
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .attr("dy","-0.25em")
+
+var teamlyWins = svg.selectAll(".teamlyWins")    
+    .data(superdataByTeam)
+    .enter()
+    .append("text") 
+    .attr("class","teamlyWins")
+    .style("font-size", "10px")   
+    .style("opacity", .3)
+    .style("fill", "gray")  
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+    .attr("x", function(d) { return getTeamlyWinsX(d); })
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .attr("dy","-0.25em")
+
+var teamlyLosses = svg.selectAll(".teamlyLosses")    
+    .data(superdataByTeam)
+    .enter()
+    .append("text") 
+    .attr("class","teamlyLosses")
+    .style("font-size", "10px")   
+    .style("opacity", .3)
+    .style("fill", "gray")  
+    .text(function(d) { return (" " + (d.values[year-2005].games -d.values[year-2005].wins ) +" ") ; })
+    .attr("x", function(d) { return getTeamlyLossesX(d); })
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .attr("dy","-0.25em")
+
+var teamlySquares = svg.selectAll(".teamlySquares")    
+    .data(superdataByTeam)
+    .enter()
+  .append("rect")
+    .attr("class","teamlySquares")
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+    .style("fill-opacity", .1)
+    .attr("height", yStandingByYear.rangeBand())
+    .attr("width", xStandingByYear.rangeBand()/3)
+    .attr("x", function(d) { return getTeamlySquaresX(d); })
+    .attr("y", function(d) { return (getTeamlyTableY(d)-18); })
+
+var teamlyButtons = svg.selectAll(".teamlyButton")    
+    .data(superdataByTeam)
+    .enter()
+  .append("path")
+    .attr("class","teamlyButton")
+    .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+var meshShadowBelow = chart.selectAll(".shadowTile")
+    .data(superdataMeshShadow)
+    .enter()
+  .append("path")
+    .attr("class","shadowTile")
+    .style("fill", function(d) { return d3.rgb(teamColorScale(d.teamID)); })
+    .style("fill-opacity", .0)
+    .attr("d", function(d) { return getMeshShadowBelowCoordinates(d); })
+
+var yearlyButtonText = chart.selectAll(".yearlyButtonText")    
+    .data(yearsAlone)
+    .enter()
+    .append("text") 
+    .attr("class","yearlyButtonText")
+    .style("font-size", "14px")   
+    .style("fill", "black")  
+    .text(function(d) { return (" " +d +" ") ; })
+    .attr("x", function(d) { return xWinningPctByYear(d) + xWinningPctByYear.rangeBand()/6 ; })           
+    .attr("y", function(d) { return (chartHeight + 20); })
+
+var yearlyButtons = chart.selectAll(".yearlyButton")    
+    .data(yearsAlone)
+    .enter()
+  .append("path")
+    .attr("class", "yearlyButton") 
+    .attr("d", function(d) { return "M" +
+    " " + xWinningPctByYear(d) + "," + (chartHeight) + " " +
+    "L" + (xWinningPctByYear(d) +xWinningPctByYear.rangeBand())+ "," + (chartHeight) + " " +
+    "L" + (xWinningPctByYear(d) +xWinningPctByYear.rangeBand())+ "," + (chartHeight + 45) + " " +
+    "L" + xWinningPctByYear(d)+ "," + (chartHeight + 45) + " " +
+    "Z"; })
+
+//add surface mesh
+var mesh = chart.selectAll(".meshTile")
+    .data(superdataMesh)
+    .enter()
+    .append("path")
+    .style("fill", function(d) { return getMeshFill(d); })
+    .style("stroke", function(d) { return d3.rgb(teamColorScale(d.teamID)); })
+      .attr("class", "meshTile")
+      .attr("d", function(d) { return getMeshCoordinates(d) })
+
+var teamlyAntennae = chart.selectAll(".teamlyAntenna")
+    .data(teamlySuperdata)
+    .enter()
+    .append("path")
+    .attr("class", "teamlyAntenna")
+    .style("fill", function(d) { return getTeamlyAntennaeFill(d); })
+    .attr("d", function(d) { return getTeamlyAntennaeCoordinates(d) })
+
+var yearlyAntennae = chart.selectAll(".yearlyAntenna")
+    .data(yearlySuperdata)
+    .enter()
+    .append("path")
+    .attr("class", "yearlyAntenna")
+    .style("fill", function(d) { return getYearlyAntennaeFill(d); })
+    .attr("d", function(d) { return getYearlyAntennaeCoordinates(d); })
+
+var yearlyPath = chart.selectAll(".yearlyPath")
+    .data(yearlyPathData)
+    .enter()
+    .append("path")
+      .attr("class", "yearlyPath")
+      .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+      .attr("d", function(d) { return getYearlyPathCoordinates(d); })
+
+var teamlyPath = chart.selectAll(".teamlyPath")
+      .data(teamlySuperdata)
+      .enter()
+      .append("path")
+      .attr("class", "teamlyPath")
+      .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+      .attr("d", function(d) { return getTeamlyPathCoordinates(d); })
+
+
+var scatterPlotCircles = chart.selectAll(".scatterPlotCircle")
+      .data(teamlySuperdata)
+      .enter()
+      .append("circle")
+      .attr("class", "scatterPlotCircle")
+      .attr("cx", function(d) { return getCX(d); })
+      .attr("cy", function(d) { return getCY(d); })
+      .attr("r", 1);
+/*
+var teamlyPathShadow = chart.selectAll(".teamlyPathShadow")
+      .data(teamlySuperdataShadow)
+      .enter()
+      .append("path")
+      .attr("class", "teamlyPathShadow")
+      .attr("d", function(d) { return getTeamlyPathShadowCoordinates(d); })
+
+var yearlyPathSilhouette = chart.selectAll(".yearlyPathSilhouette")
+      .data(yearlyPathShadowData)
+      .enter()
+      .append("path")
+      .attr("class", "yearlyPathSilhouette")
+      .attr("d", function(d) { return getYearlyPathSilhouetteCoordinates(d); })
+
+var movingQuadrilateralFront = svg.selectAll(".axis3")
+    .data(superdataFocus)
+    .enter()
+  .append("path")
+    .attr("class", "axis3")
+    .style("stroke", "red")
+    .style("stroke-opacity", .4)
+    .style("fill", "none")
+    .attr("d", function(d) { return getMovingQuadrilateralFrontCoordinates(d); })
+*/
+
+var quintileQuadrilateralFront = chart.selectAll(".quad2")
+    .data(winningPctQuintiles2)
+    .enter()
+    .append("path")
+      .attr("class", "quad2")
+      .attr("d", function(d) { return getQuintileQuadrilateralFrontCoordinates(d); })
+
+ //use fractional lengths of known rangeBands to move around the mesh locally, in steps.
+  //for example, to set vertices of a meshTile, set the pen down at the leftmost point, 
+  //i.e. xAllThree(ddd),yAllThree(ddd), 
+  //then:
+
+  //to move one street block NE along the x-axis: + xWinningPctByStanding.rangeBand()/2
+  //              along the y-axis: - xWinningPctByStanding.rangeBand()/5
+  //to move one street block NE  
+  // & then one avenue block SE along the x-axis: + xWinningPctByStanding.rangeBand()/2 + xWinningPctByYear.rangeBand()/2
+  //              along the y-axis: - xWinningPctByStanding.rangeBand()/5 + xWinningPctByYear.rangeBand()/5
+  //
+  //to move one avenue block SE along the x-axis:                     + xWinningPctByYear.rangeBand()/2
+  //              along the y-axis:                   + xWinningPctByYear.rangeBand()/5
+
+
+
+
+//////////////////
+//add event listeners
+yearlyAntennae.on("mouseover", function(d) {
+  //changes to data
+
+
+  focusTeam = d.teamID;
+
+  teamlySuperdata = superdata.filter(function(element) {
+      return element.teamID == focusTeam});
+
+  superdataMeshTeamlyFocus= superdataMesh.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+  superdataFocus = teamlySuperdata.filter(function(element) {
+      return element.season ==year});
+
+  testlogo
+    .attr("xlink:href", function(d) { return "nbaLogos/" + logoScale(focusTeam) +" "; })
+
+
+//  movingQuadrilateralFront.data(superdataFocus)
+//      .attr("d", function(d) { return getMovingQuadrilateralFrontCoordinates(d); })
+  
+  winningPctFocus.data(superdataFocus)
+      .attr("x", function(d) { return getWinningPctFocusX(d); })           
+      .attr("y", function(d) { return getWinningPctFocusY(d); })
+      .text(function(d) { return (" "+ formatPercent(d.winningPct)  + " ") ; })  
+      .style("opacity", function(d) { return getWinningPctFocusOpacity(d); })
+
+  givenStanding.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); }) 
+    .text(function(d) { return ("standing: "  + getOrdinalSuffixOf(31 - d.leagueRank) + " " ); })
+
+  givenStats.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); })
+
+  titleSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  givenSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  seasonIndices.data(yearsAlone)   
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+  
+  standingIndices.data(possibleRanks)   
+    .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
+
+  teamlyNames.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyWins.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+
+  teamlyLosses.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].games - d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+    .style("fill-opacity", function(d) { return getTeamlySquaresFillOpacity(d); })
+    .attr("y", function(d) { return (getTeamlyTableY(d)-18 ); })
+
+  teamlyButtons.data(superdataByTeam)
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+
+
+
+
+//shadow specificiations
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam && orientation == "allThree") {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+//specifications of the mesh itself
+  mesh.data(superdataMesh)
+      .style("fill-opacity", function(d) {
+          if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } })
+
+})
+
+teamlyAntennae.on("mouseover", function(d) {
+  //changes to data
+  year = d.season;
+  selectedLeagueRank = d.leagueRank;
+  yearlyPathData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+  yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  yearlySuperdata = superdata.filter(function(element) {
+      return element.season ==year});
+
+  superdataMeshYearlyFocus = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  superdataFocus = teamlySuperdata.filter(function(element) {
+      return element.season ==year});
+
+  testlogo
+    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+
+
+//  movingQuadrilateralFront.data(superdataFocus)
+//      .attr("d", function(d) { return getMovingQuadrilateralFrontCoordinates(d); })
+  
+  winningPctFocus.data(superdataFocus)
+      .attr("x", function(d) { return getWinningPctFocusX(d); })           
+      .attr("y", function(d) { return getWinningPctFocusY(d); })
+      .text(function(d) { return (" "+ formatPercent(d.winningPct)  + " ") ; })  
+      .style("opacity", function(d) { return getWinningPctFocusOpacity(d); })
+
+  givenStanding.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); }) 
+    .text(function(d) { return ("standing: "  + getOrdinalSuffixOf(31 - d.leagueRank) + " " ); })
+
+  givenStats.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); })
+
+  titleSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  givenSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  seasonIndices.data(yearsAlone)   
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+  
+  standingIndices.data(possibleRanks)   
+    .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
+
+  teamlyNames.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyWins.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyLosses.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].games - d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+    .style("fill-opacity", function(d) { return getTeamlySquaresFillOpacity(d); })
+    .attr("y", function(d) { return (getTeamlyTableY(d)-18 ); })
+
+  teamlyButtons.data(superdataByTeam)
+      .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam && orientation == "allThree") {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) {
+          if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } })
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+       if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } else if (d.teamID !== focusTeam && d.season == year) {
+        return .25;
+      }  else  {
+        return getMeshFillOpacity(d); 
+      }
+    })
+})
+
+
+teamOrderButtons.on("mouseover", function(d) {
+
+  teamOrder = d; 
+
+  var duration = 1000;
+
+  teamOrderButtonWireframe
+    .transition()
+    .duration(1000)
+    .attr("y", function(d,i) { 
+      if (teamOrder == "yearlyStanding") {
+          return 368; 
+        } else if (teamOrder == "winningest") {
+          return 408;
+        }
+      }) 
+
+  teamlyAntennae.data(teamlySuperdata)
+      .transition()
+      .duration(1000)
+      .attr("d", function(d) { return getTeamlyAntennaeCoordinates(d); })
+
+  yearlyAntennae.data(yearlySuperdata)
+      .transition()
+      .duration(1000)
+      .attr("d", function(d) { return getYearlyAntennaeCoordinates(d); })
+
+  scatterPlotCircles.data(teamlySuperdata)
+      .transition()
+      .duration(duration)
+      .style("fill-opacity", function(d) { return getScatterPlotCircleFillOpacity(d); })
+      .attr("cx", function(d) { return getCX(d); })
+      .attr("cy", function(d) { return getCY(d); })
+
+  teamlyNames.data(superdataByTeam)
+      .transition()
+      .duration(duration)
+      .attr("y", function(d) { return getTeamlyTableY(d); })
+
+  teamlyWins.data(superdataByTeam)
+      .transition()
+      .duration(duration)
+      .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+      .attr("y", function(d) { return getTeamlyTableY(d); })
+
+  teamlyLosses.data(superdataByTeam)
+      .transition()
+      .duration(duration)
+      .text(function(d) { return (" " + (d.values[year-2005].games -d.values[year-2005].wins) +" ") ; })
+      .attr("y", function(d) { return getTeamlyTableY(d); })
+
+  teamlySquares.data(superdataByTeam)
+      .transition()
+      .duration(duration)
+      .attr("y", function(d) { return (getTeamlyTableY(d)-18 ); })
+
+  teamlyButtons.data(superdataByTeam)
+      .transition()
+      .duration(duration)
+      .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+  yearlyPath.data(yearlyPathData)
+      .transition()
+      .duration(duration)
+      .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+      .attr("d", function(d) { return getYearlyPathCoordinates(d); })
+/*
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+      .transition()
+      .duration(duration)
+      .attr("d", function(d) { return getYearlyPathSilhouetteCoordinates(d); })
+*/
+  meshShadowBelow.data(superdataMeshShadow)
+      .transition()
+      .duration(duration)
+      .attr("d", function(d) { return getMeshShadowBelowCoordinates(d); })
+
+  teamlyPath.data(teamlySuperdata)
+    .transition()
+    .duration(duration)
+    .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+    .attr("d", function(d) { return getTeamlyPathCoordinates(d); })
+
+  mesh.data(superdataMesh)
+      .transition()
+      .duration(duration) 
+      .attr("d", function(d) { return getMeshCoordinates(d) })
+
+})
+
+/*
+
+colorButtons.on("mouseover", function(d) {
+
+  if (colorSpectrum !== d) {
+  
+  colorSpectrum = d; 
+  
+  }
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+
+  mesh.data(superdataMesh)
+    .style("fill", function(d) { return getMeshFill(d); })
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); })
+    .style("stroke", function(d) {
+      if (colorSpectrum == "teamPrimaries") {
+        return d3.rgb(teamColorScale(d.teamID));
+      } else if (colorSpectrum == "blues") {
+        return d3.rgb(colorScale(5 + Math.floor(d.valence/2)*Math.ceil(50*d.barHeight) +Math.ceil(d.valence/2 -.0001)*Math.ceil(50*d.barHeight) ) );
+      } else if (colorSpectrum == "blueBorders") {
+        return "steelblue";
+      } else if (colorSpectrum == "teamPrimaryBorders") { 
+        return d3.rgb(teamColorScale(d.teamID));
+    } })
+      .style("stroke-opacity", function(d) {
+      if (colorSpectrum == "teamPrimaries") {
+        return 0;
+      } else if (colorSpectrum == "blues") {
+        return 0;
+      } else if (colorSpectrum == "blueBorders") {
+        return .1;
+      } else if (colorSpectrum == "teamPrimaryBorders") { 
+        return .1;
+    } })
+      .style("stroke-width", function(d) {
+      if (colorSpectrum == "teamPrimaries") {
+        return 0;
+      } else if (colorSpectrum == "blues") {
+        return 0;
+      } else if (colorSpectrum == "blueBorders") {
+        return .5;
+      } else if (colorSpectrum == "teamPrimaryBorders") { 
+        return .5;
+    } })
+
+})
+
+*/
+//changes on contact with the mesh itself (i.e. focusTeam, year, color, etc.)
+//this is all kind of optional / flexible
+mesh.on("mouseover", function(d) {
+
+if (setting == "full" ) {
+
+  //changes to data
+  year = d.season;
+  selectedLeagueRank = d.leagueRank;
+  yearlyPathData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+  yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  yearlySuperdata = superdata.filter(function(element) {
+      return element.season ==year});
+
+  focusTeam = d.teamID;
+
+  teamlySuperdata = superdata.filter(function(element) {
+      return element.teamID == focusTeam});
+
+  superdataMeshTeamlyFocus= superdataMesh.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+  superdataMeshYearlyFocus = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  superdataFocus = teamlySuperdata.filter(function(element) {
+      return element.season ==year});
+
+  testlogo
+    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+
+  yearlyPath.data(yearlyPathData)
+      .transition()
+      .duration(800)
+      .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+      .attr("d", function(d) { return getYearlyPathCoordinates(d); })
+
+  teamlyPath.data(teamlySuperdata)
+      .transition()
+      .duration(800)
+      .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+      .attr("d", function(d) { return getTeamlyPathCoordinates(d); })
+
+  scatterPlotCircles.data(teamlySuperdata)
+      .transition()
+      .duration(800)
+      .style("fill-opacity", function(d) { return getScatterPlotCircleFillOpacity(d); })
+      .attr("cx", function(d) { return getCX(d); })
+      .attr("cy", function(d) { return getCY(d); })
+
+//  movingQuadrilateralFront.data(superdataFocus)
+//      .attr("d", function(d) { return getMovingQuadrilateralFrontCoordinates(d); })
+  
+  winningPctFocus.data(superdataFocus)
+      .attr("x", function(d) { return getWinningPctFocusX(d); })           
+      .attr("y", function(d) { return getWinningPctFocusY(d); })
+      .text(function(d) { return (" "+ formatPercent(d.winningPct)  + " ") ; })  
+      .style("opacity", function(d) { return getWinningPctFocusOpacity(d); })
+
+  givenStanding.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); }) 
+    .text(function(d) { return ("standing: "  + getOrdinalSuffixOf(31 - d.leagueRank) + " " ); })
+
+  givenStats.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); })
+
+  titleSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  givenSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  seasonIndices.data(yearsAlone)   
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+  
+  standingIndices.data(possibleRanks)   
+    .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
+
+  teamlyNames.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyWins.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+
+  teamlyLosses.data(superdataByTeam)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].games - d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+    .style("fill-opacity", function(d) { return getTeamlySquaresFillOpacity(d); })
+    .attr("y", function(d) { return (getTeamlyTableY(d)-18 ); })
+
+  teamlyButtons.data(superdataByTeam)
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+
+
+
+
+//shadow specificiations
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam && orientation == "allThree") {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+//specifications of the mesh itself
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) {
+        if (colorSpectrum == "teamPrimaries" && d.season == year && d.teamID == focusTeam ) {
+        return .1;
+      } else if (d.season == year && d.teamID == focusTeam) {
+        return .6
+      } else {
+        return getMeshFillOpacity(d); 
+      }
+    })
+  .style("fill", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return d3.rgb(teamColorScale(d.teamID));
+      } else {
+        return getMeshFill(d); 
+      } })
+/*
+  mesh.data(superdataMesh)
+      .style("fill-opacity", function(d) {
+          if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } })
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+       if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } else if (d.teamID == focusTeam && d.season !== year) {
+        return .25;
+      }  else  {
+        return getMeshFillOpacity(d); 
+      }
+    })
+      .attr("d", function(d) { return getMeshCoordinates(d) })
+*/
+
+}
+
+})
+
+
+settingButtons.on("mouseover", function(d) {
+
+  setting = d;
+
+  mesh.data(superdataMesh)
+    .transition()
+    .duration(1000)
+    .attr("d", function(d) { return getMeshCoordinates(d) })
+ 
+  settingButtonWireframe
+    .transition()
+    .duration(1000)
+    .attr("y", function(d,i) { 
+      if (setting == "full") {
+          return 468; 
+        } else if (setting == "isolateTeams") {
+          return 508;
+        }else if (setting == "isolateSeasons") {
+          return 548;
+        }
+      }) 
+
+  yearlyPath.data(yearlyPathData)
+      .transition()
+      .duration(1000)
+      .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+
+  teamlyPath.data(yearlyPathData)
+      .transition()
+      .duration(1000)
+      .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+
+  scatterPlotCircles.data(teamlySuperdata)
+      .transition()
+      .duration(1000)
+      .style("fill-opacity", function(d) { return getScatterPlotCircleFillOpacity(d); })
+ 
+  teamlyAntennae.data(teamlySuperdata)
+      .transition()
+      .duration(1000)
+      .style("fill", function(d) { return getTeamlyAntennaeFill(d); })
+      .attr("d", function(d) { return getTeamlyAntennaeCoordinates(d); })
+
+  yearlyAntennae.data(yearlySuperdata)
+      .transition()
+      .duration(1000)
+      .style("fill", function(d) { return getYearlyAntennaeFill(d); })
+      .attr("d", function(d) { return getYearlyAntennaeCoordinates(d); })
+
+})
+
+
+teamlyButtons.on("mouseout", function(d) {
+  
+  teamlyNames.data(superdataByTeam)
+    .style("opacity", .3)
+  teamlyWins.data(superdataByTeam)
+    .style("opacity", .3)
+  teamlyLosses.data(superdataByTeam)
+    .style("opacity", .3)
+
+  standingIndices.data(possibleRanks)   
+    .style("opacity", .2)
+
+  winningPctFocus.data(superdataFocus)
+    .style("opacity", .0) 
+
+  teamlySquares.data(superdataByTeam)
+      .style("fill-opacity", .1)
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", .00)
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); })
+    .style("fill", function(d) { return getMeshFill(d); })
+
+})
+
+yearlyButtons.on("mouseout", function(d) {
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", .00)
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); })
+    .style("fill", function(d) { return getMeshFill(d); })
+})
+
+mesh.on("mouseout", function(d) {
+
+  teamlyNames.data(superdataByTeam)
+    .style("opacity", .3)
+
+  teamlyWins.data(superdataByTeam)
+    .style("opacity", .3)
+  teamlyLosses.data(superdataByTeam)
+    .style("opacity", .3)
+
+  standingIndices.data(possibleRanks)   
+    .style("opacity", .2)
+
+  winningPctFocus.data(superdataFocus)
+    .style("opacity", .0) 
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill-opacity", .1)
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", .0)
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); })
+    .style("fill", function(d) { return getMeshFill(d); })
+
+  })
+
+yearlyButtons.on("mouseover", function(d) {
+
+//that which changes
+  year = d;
+  yearlyPathData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+  yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+  yearlySuperdata = superdata.filter(function(element) {
+      return element.season ==year});
+  superdataMeshYearlyFocus = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  yearlyAntennae.data(yearlySuperdata)
+      .attr("d", function(d) { return getYearlyAntennaeCoordinates(d); })
+
+  givenStats.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); })
+
+  titleSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+    
+  givenSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  seasonIndices.data(yearsAlone)   
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+
+  mesh.data(superdataMesh)
+      .style("fill-opacity", function(d) {
+          if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } })
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+       if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } else if (d.teamID !== focusTeam && d.season == year) {
+        return .25;
+      }  else  {
+        return getMeshFillOpacity(d); 
+      }
+    })
+    .attr("d", function(d) { return getMeshCoordinates(d) })
+
+  teamlyNames.data(superdataByTeam)
+    .transition()
+    .duration(800)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+
+  teamlyWins.data(superdataByTeam)
+    .transition()
+    .duration(800)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+
+
+  teamlyLosses.data(superdataByTeam)
+      .transition()
+    .duration(800)
+    .attr("y", function(d) { return getTeamlyTableY(d); })
+    .text(function(d) { return (" " + (d.values[year-2005].games - d.values[year-2005].wins) +" ") ; })
+
+  teamlySquares.data(superdataByTeam)
+    .transition()
+    .duration(800)
+    .attr("y", function(d) { return (getTeamlyTableY(d)-18); })
+
+  yearlyPath.data(yearlyPathData)
+  .transition()
+  .duration(800)
+  .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+  .attr("d", function(d) { return getYearlyPathCoordinates(d); })
+/*
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return getYearlyPathSilhouetteCoordinates(d); })
+*/
+  teamlyButtons.data(superdataByTeam)
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return getTeamlyButtonsCoordinates(d); }) 
+
+})
+
+
+
+teamlyButtons.on("mouseover", function(d) {
+
+  focusTeam = d.key;
+  selectedLeagueRank = d.values[year-2005].leagueRank;
+
+  teamlySuperdata = d.values;
+  teamlySuperdataShadow = d.values;
+
+  superdataFocus = teamlySuperdata.filter(function(element) {
+      return element.season ==year});
+
+  superdataMeshTeamlyFocus= superdataMesh.filter(function(element) {
+      return element.teamID ==focusTeam});
+
+  testlogo
+    .attr("xlink:href", function(d) { return "lib/nbaLogos/" + logoScale(focusTeam) +" "; })
+
+  standingIndices.data(possibleRanks)   
+    .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
+
+  winningPctFocus.data(superdataFocus)
+      .text(function(d) { return (" "+ formatPercent(d.winningPct)  + " ") ; })
+      .style("opacity", function(d) { return getWinningPctFocusOpacity(d); })         
+      .attr("y", function(d) { return getWinningPctFocusY(d); })  
+
+
+  teamlyAntennae.data(teamlySuperdata)
+   .attr("d", function(d) { return getTeamlyAntennaeCoordinates(d); })
+
+  givenStats.data(superdata)
+    .style("opacity", function(d) { return getStatsOpacity(d); })
+
+  givenSeason.data(yearsAlone)
+    .style("opacity", function(d) { return getGivenSeasonOpacity(d); })
+
+  scatterPlotCircles.data(teamlySuperdata)
+      .transition()
+      .duration(800)
+      .style("fill-opacity", function(d) { return getScatterPlotCircleFillOpacity(d); })
+      .attr("cx", function(d) { return getCX(d); })
+      .attr("cy", function(d) { return getCY(d); })
+
+  teamlyNames.data(superdataByTeam)
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyWins.data(superdataByTeam)
+
+    .text(function(d) { return (" " + (d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlyLosses.data(superdataByTeam)
+
+    .text(function(d) { return (" " + (d.values[year-2005].games -d.values[year-2005].wins) +" ") ; })
+    .style("opacity", function(d) { return getTeamlyTableOpacity(d); })
+
+  teamlySquares.data(superdataByTeam)
+    .style("fill", function(d) { return getTeamlySquaresFill(d); })
+    .style("fill-opacity", function(d) { return getTeamlySquaresFillOpacity(d); })
+    
+  teamlyPath.data(teamlySuperdata)
+     .transition()
+     .duration(800)
+     .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+     .attr("d", function(d) { return getTeamlyPathCoordinates(d); })
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam && orientation == "allThree") {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) {
+      if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } })
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+       if (d.season == year && d.teamID == focusTeam) {
+        return .8;
+      } else if (d.teamID == focusTeam && d.season !== year) {
+        return .25;
+      }  else  {
+        return getMeshFillOpacity(d); 
+      }
+    })
+      .attr("d", function(d) { return getMeshCoordinates(d) })
+
+})
+
+
+orientationButtons.on("mouseover", function(d) {
+
+  orientation = d; 
+
+  orientationButtonWireframe
+      .transition()
+      .duration(1000)
+      .attr("d", function(d) { return getOrientationButtonWireframeCoordinates(d); })
+
+  teamlyAntennae.data(teamlySuperdata)
+      .transition()
+      .duration(1000)
+      .attr("d", function(d) { return getTeamlyAntennaeCoordinates(d); })
+
+  yearlyAntennae.data(yearlySuperdata)
+      .transition()
+      .duration(1000)
+      .attr("d", function(d) { return getYearlyAntennaeCoordinates(d); })
+
+  mesh.data(superdataMesh)
+      .transition()
+      .duration(1200)
+      .attr("d", function(d) { return getMeshCoordinates(d) })
+
+  scatterPlotCircles.data(teamlySuperdata)
+      .transition()
+      .duration(1200)
+      .style("fill-opacity", function(d) { return getScatterPlotCircleFillOpacity(d); })
+      .attr("cx", function(d) { return getCX(d); })
+      .attr("cy", function(d) { return getCY(d); })
+
+  quintileQuadrilateralBack.data(winningPctQuintiles)
+      .transition()
+      .duration(1200)
+      .attr("d", function(d) { return getQuintileQuadrilateralBackCoordinates(d); })
+
+  quintileQuadrilateralFront.data(winningPctQuintiles2)
+      .transition()
+      .duration(1200)
+      .attr("d", function(d) { return getQuintileQuadrilateralFrontCoordinates(d); })
+
+  winningPctIndices.data(winningPctQuintiles)
+    .transition()
+    .duration(1200)
+    .style("opacity", function(d) { return getWinningPctIndicesOpacity(d); })
+    .attr("x", function(d) { return getWinningPctIndicesX(d); })           
+    .attr("y", function(d) { return getWinningPctIndicesY(d); })
+
+  winningPctFocus.data(superdataFocus)
+    .transition()
+    .duration(1200)
+      .style("opacity", function(d) { return getWinningPctFocusOpacity(d); })
+      .attr("x", function(d) { return getWinningPctFocusX(d); })           
+      .attr("y", function(d) { return getWinningPctFocusY(d); })  
+  
+  seasonIndices.data(yearsAlone)   
+    .transition()
+    .duration(1200)
+    .style("opacity", function(d) { return getSeasonIndicesOpacity(d); })
+    .attr("x", function(d) { return getSeasonIndicesX(d); })           
+    .attr("y", function(d) { return getSeasonIndicesY(d); })
+
+  standingIndices.data(possibleRanks)   
+    .transition()
+    .duration(1200)
+    .style("opacity", function(d) { return getStandingIndicesOpacity(d); })
+    .attr("x", function(d) { return getStandingIndicesX(d); })           
+    .attr("y", function(d) { return getStandingIndicesY(d); })
+
+  yearlyPath.data(yearlyPathData)
+      .transition()
+      .duration(1200)
+      .style("opacity", function(d) { return getYearlyPathOpacity(d); })
+      .attr("d", function(d) { return getYearlyPathCoordinates(d); })
+
+  meshShadowBelow.data(superdataMeshShadow)
+      .transition()
+      .duration(1200)
+      .attr("d", function(d) { return getMeshShadowBelowCoordinates(d); })
+
+  teamlyPath.data(teamlySuperdata)
+      .transition()
+      .duration(1200)
+      .style("opacity", function(d) { return getTeamlyPathOpacity(d); })
+      .attr("d", function(d) { return getTeamlyPathCoordinates(d); })
+/*
+  teamlyPathShadow.data(teamlySuperdataShadow)
+    .transition()
+    .duration(3000)
+    .attr("d", function(d) { return getTeamlyPathShadowCoordinates(d); })
+
+   yearlyPathSilhouette.data(yearlyPathShadowData)
+      .transition()
+      .duration(3000)
+      .attr("d", function(d) { return getYearlyPathSilhouetteCoordinates(d); })
+*/
+})
+
+
+
+
+
+/*
+mesh.on("click", function(d) {
+
+mode = "zoomedIn";
+
+year = d.season;
+orientation = "winningPctByYear";
+
+var yearlySpiralCoordinates= [];
+for (i=0;i<=yearsAlone.length;i++) {
+  yearlySpiralCoordinates[i]=strudel.spiralMothership.prototype.getRadius(i*2*Math.PI, year-2005,year-2004,yearsAlone.length);
+}
+
+
+var xSpiral = d3.scale.ordinal()
+  .domain(yearsAlone)
+  .range(spiralCoordinates)
+
+var xSpiralStretch = d3.scale.linear()
+   .domain([0,yearsAlone.length])
+   .range([chartMargin.left, chartWidth + chartMargin.left]);
+
+
+    mesh.data(superdataMesh)
+
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return "M" + 
+//left corner
+        " " + xSpiralStretch(xSpiral(d.season)) + "," + 
+              yWinningPctByYear(d.doublyPriorWinningPct)  + " " + 
+//top corner
+        "L" + xSpiralStretch(xSpiral(d.season)) + ","  +
+              yWinningPctByYear(d.priorWinningPctWithinStanding) + " " + 
+//right corner
+        "L" +xSpiralStretch(xSpiral(d.season+1)) + ","  +
+              yWinningPctByYear(d.winningPct) + " " + 
+//bottom corner
+        "L" +xSpiralStretch(xSpiral(d.season+1)) + ","  +
+              yWinningPctByYear(d.priorWinningPctWithinYear) + " " + 
+
+        "Z"; })
+
+
+
+  yearlyPath.data(yearlyPathData)
+
+      .transition()
+      .duration(800)
+      .attr("class", "yearlyPath")
+      .attr("d", function(d) { return "M" + 
+
+        " "+ xSpiralStretch(xSpiral(d.season+1)) + "," + 
+             (yWinningPctByYear(d.priorWinningPctWithinYear))  + " " +
+
+        " "+ xSpiralStretch(xSpiral(d.season+1)) + "," + 
+             (yWinningPctByYear(d.winningPct) )  + " " +
+        " "; });
+
+  teamlyPath.data(teamlySuperdata)
+
+      .transition()
+      .duration(800)
+      .attr("d", function(d) { return "M" + 
+
+        " " + xSpiralStretch(xSpiral(d.season)) + ","  +
+              yWinningPctByYear(d.priorWinningPctWithinTeam) + " " + 
+
+        "L" +xSpiralStretch(xSpiral(d.season+1)) + ","  +
+              yWinningPctByYear(d.winningPct) + " " + 
+              
+        " "; })
+
+  scatterPlotCircles.data(teamlySuperdata)
+
+      .transition()
+      .duration(800)
+      .attr("cx", function(d) { return  xSpiralStretch(xSpiral(d.season+1)); })
+      .attr("cy", function(d) { return ( yWinningPctByYear(d.winningPct)); })
+
+
+
+})
+
+d3.csv("data/allTheSeasons.csv", function(error, csv) {
+if (error) return console.warn(error);
+data = csv;
+
+var resultsBySeason = d3.nest()
+      .key(function(d) { return d.season; })
+      .sortKeys(d3.ascending)
+      
+         // medianWins: d3.median(values, function(d) {return d.wins }),
+         // meanWins: d3.mean(values, function(d) {return d.wins })
+         //  };
+         // })
+      .entries(data);
+
+var rawClippersResults = resultsBySeason[11].values.filter(function(element) {
+      return element.homeTeam == "Golden State Warriors" || element.visitor =="Golden State Warriors"});
+
+refinedClippersResults = rawClippersResults.map(function(d) {
+
+  if (d.homeTeam == "Golden State Warriors" ) {
+
+    return {
+      data: d.date,
+      opp: d.visitor, 
+      season: d.season,
+      clippersPts: d.homePts,
+      oppPts: d.visitorPts,
+      pointDifferential: (d.homePts - d.visitorPts),
+      homeWins: Math.ceil(.9/(d.homePts - d.visitorPts))
+    }
+    } else if (d.visitor == "Golden State Warriors") {
+      return {
+      data: d.date,
+      opp: d.homeTeam,
+      season: d.season,
+      clippersPts: d.visitorPts,
+      oppPts: d.homePts,
+      pointDifferential: (d.visitorPts - d.homePts),
+      awayWins: Math.ceil(.9/(d.visitorPts-d.homePts))
+      }
+    }
+  });
+
+var clipsWins = d3.nest()
+  .key(function(d) { return d.season; })
+     .rollup(function(values) { 
+        return {
+          homeWins: d3.sum(values, function(d) {return d.homeWins }),
+          awayWins: d3.sum(values, function(d) {return d.awayWins }),
+          wins: d3.sum(values, function(d) {return d.awayWins })+d3.sum(values, function(d) {return d.homeWins })
+           };
+          })
+      .entries(refinedClippersResults);
+
+      console.log(clipsWins);
+})
+//closing the after-the-data-loads section
+*/
+
+
+/*
+
+yearlyPathSilhouette.on("mouseout", function(d) {
+
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+    .style("fill", "steelblue")
+    .style("fill-opacity", .0)
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", .0)
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); })   
+    .style("fill", function(d) { return getMeshFill(d); })
+
+
+  })
+
+
+teamlyPathShadow.on("mouseout", function(d) {
+
+
+  teamlyPathShadow.data(teamlySuperdataShadow)
+    .style("fill-opacity", .12)
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", .00)
+
+
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) { return getMeshFillOpacity(d); }) 
+    .style("fill", function(d) { return getMeshFill(d); } )
+
+
+  })
+
+
+
+teamlyPathShadow.on("mouseover", function(d) {
+  
+  year = d.season;
+
+  yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  focusTeam = d.teamID;
+
+  teamlyPathShadow.data(teamlySuperdataShadow)
+    .style("fill-opacity", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return .6;
+      } else {
+        return .12;
+      } })
+    .style("fill", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return "none";// d3.rgb(teamColorScale(d.teamID));
+      } else {
+        return "none";
+      } 
+    } )
+
+//specifications of the mesh itself
+
+
+
+  meshShadowBelow.data(superdataMeshShadow) 
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam ) {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+
+
+//specifications of the mesh itself
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) {
+        if (colorSpectrum == "teamPrimaries" && d.season == year && d.teamID == focusTeam ) {
+        return .1;
+      } else if (d.season == year && d.teamID == focusTeam) {
+        return .6
+      } else {
+        return getMeshFillOpacity(d); 
+      }
+    }) 
+  .style("fill", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return d3.rgb(teamColorScale(d.teamID));
+      } else {
+        return getMeshFill(d); 
+      } })
+})
+
+yearlyPathSilhouette.on("mouseover", function(d) {
+  
+  year = d.season;
+
+  yearlyPathShadowData = unkeyedDataWithRank.filter(function(element) {
+      return element.season ==year});
+
+  focusTeam = d.teamID;
+
+
+//specifications of the mesh itself
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+    .style("fill-opacity", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return .0;
+      } else {
+        return .0;
+      } })
+    .style("fill", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return d3.rgb(teamColorScale(d.teamID));
+      } else {
+        return "steelblue";
+      } 
+    } )
+
+  meshShadowBelow.data(superdataMeshShadow)
+    .style("fill-opacity", function(d) { 
+      if (d.season == year && d.teamID == focusTeam ) {
+        return .2;
+      } else {
+        return .0;
+      } })
+
+
+//specifications of the mesh itself
+  mesh.data(superdataMesh)
+    .style("fill-opacity", function(d) {
+        if (colorSpectrum == "teamPrimaries" && d.season == year && d.teamID == focusTeam ) {
+        return .1;
+      } else if (d.season == year && d.teamID == focusTeam) {
+        return .6
+      } else {
+        return getMeshFillOpacity(d); 
+      }
+    })
+  .style("fill", function(d) {
+      if (d.season == year && d.teamID == focusTeam ) {
+        return d3.rgb(teamColorScale(d.teamID));
+      } else {
+        return getMeshFill(d); 
+      } })
+})
+
+*/
+
+yearlyButtons.on("click", function(d) {
+
+//superdataMeshYearlyFocus = unkeyedDataWithRank.filter(function(element) {
+  //    return element.season ==year});
+
+  if (clickState == "unclicked") {
+  clickState = "yearClicked";
+  } else if (clickState == "yearClicked") {
+  clickState = "unclicked"
+  } else if (clickState == "teamClicked") {
+  clickState = "yearClicked"
+  } 
+
+/*
+  scatterPlotCircles.data(teamlySuperdata)
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+      if (clickState == "yearClicked") {
+      return .0;
+      } else {
+      return .8;
+      }
+    })
+
+
+  teamlyPathShadow.data(teamlySuperdataShadow)
+    .style("fill", "none")
+
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+    .style("fill", function(d) {
+      if (clickState == "yearClicked") {
+      return "steelblue";
+      } else {
+      return "none";
+      }
+    })
+
+  mesh.data(superdataMesh)
+    .transition()
+    .duration(2000)
+    .attr("d", function(d) { return getMeshCoordinates(d) })
+
+*/
+} )
+
+
+
+
+teamlyButtons.on("click", function(d) {
+
+ // superdataMeshTeamlyFocus= superdataMesh.filter(function(element) {
+   //   return element.teamID ==focusTeam});
+  
+  if (clickState == "unclicked") {
+  clickState = "teamClicked";
+  } else if (clickState == "teamClicked") {
+  clickState = "unclicked"
+  } else if (clickState == "yearClicked") {
+  clickState = "teamClicked"
+  } 
+
+/*
+
+  scatterPlotCircles.data(teamlySuperdata)
+    .transition()
+    .duration(800)
+    .style("fill-opacity", function(d) {
+      if (clickState == "yearClicked") {
+      return .0;
+      } else {
+      return .8;
+      }
+    })
+
+
+
+  yearlyPathSilhouette.data(yearlyPathShadowData)
+      .style("fill", "none")
+
+  teamlyPathShadow.data(teamlySuperdataShadow)
+    .style("fill", function(d) {
+      if (clickState == "teamClicked") {
+      return "none";
+      } else {
+      return "none";
+      }
+    })
+*/
+
+})
+
+
+})
+//var end_time = Date.now();
+//console.log("Time required to execute JavaScript code is : " + (end_time - start_time));
+
+</script>
+</body>
+</html>
